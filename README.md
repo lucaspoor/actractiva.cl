@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Atractiva CL — Tienda
 
-## Getting Started
+E-commerce minimalista (Chaqueta y Pantalón) construido con Next.js + Payload CMS + SQLite + Flow (pagos) + Resend (email).
 
-First, run the development server:
+## Desarrollo local
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# http://localhost:3000 (admin: /admin)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Despliegue en servidor con Docker
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+El proyecto trae listo `Dockerfile`, `docker-compose.yml` y un seed inicial
+(usuario admin + 2 productos con imágenes) que se aplica solo en el primer
+arranque si los volúmenes están vacíos.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Requisitos en el servidor
 
-## Learn More
+- Docker + Docker Compose (`docker compose` o `docker-compose`)
+- Ubuntu x86_64 (el build usa sharp/libsql nativos para `linux-x64`, glibc)
 
-To learn more about Next.js, take a look at the following resources:
+### Pasos
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Copia el proyecto al servidor (git clone o rsync).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. Crea el archivo de entorno a partir del ejemplo y edita los valores reales:
 
-## Deploy on Vercel
+   ```bash
+   cp .env.production .env
+   nano .env
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   Al menos revisa: `NEXT_PUBLIC_BASE_URL`, `PAYLOAD_SECRET`, `FLOW_*`, `RESEND_*`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   > `FLOW_ENV` puede ser `sandbox` (pruebas) o `production`. Si quieres probar
+   > pagos reales, usa `FLOW_ENV=production` con las claves de producción en
+   > la consola de Flow.
+
+3. Construye y levanta:
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+   (Si tu Docker Compose es v1, usa `docker-compose up -d --build`.)
+
+4. Verifica:
+
+   ```bash
+   docker compose logs -f web
+   docker compose ps              # status healthy
+   ```
+
+   El sitio queda en `http://TUSERVER:3000` y el admin en `/admin`.
+
+### Primer arranque
+
+Al primer levantar, el entrypoint copia al volumen persistente:
+
+- La **base de datos** sembrada (`payload.db` con admin `admin@atractivacl.cl`
+  y la password de `SEED_ADMIN_PASSWORD`).
+- Las **imágenes** iniciales de los productos a `/app/media`.
+
+Los datos persisten en los volúmenes nombrados `_db_data` y `_media_data`
+(con prefijo según el nombre de carpeta del proyecto). Si borras los volúmenes
+(`docker compose down -v`) se re-seedea.
+
+### Cambios en el código / rebuild
+
+```bash
+docker compose up -d --build
+```
+
+### Nginx / HTTPS (opcional pero recomendado)
+
+El contenedor publica el puerto 3000. Un ejemplo de proxy inverso:
+
+```nginx
+server {
+    listen 80;
+    server_name atractivacl.cl www.atractivacl.cl;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Luego agrega HTTPS con certbot. Recuerda que el webhook de Flow
+(`/api/flow/webhook`) debe ser alcanzable por **URL pública** (configúralo en
+`NEXT_PUBLIC_BASE_URL` y en Flow).
+
+### Notas
+
+- `FLOW_ENV` puede ser `sandbox` (pruebas) o `production`.
+- Si cambias el secreto de Payload después de crear datos, las sesiones se
+  invalidan; cámbialo antes del primer arranque.
+- Para persistencia de datos se usan volúmenes Docker; no es necesario copiar
+  la base a mano.

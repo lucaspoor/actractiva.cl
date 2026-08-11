@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+.gitignore
+payload.db
+*.tsbuildinfo
+.env*
+!media/
+README.md
+INSTRUCCIONES.md
