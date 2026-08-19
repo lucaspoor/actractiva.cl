@@ -19,7 +19,7 @@ services:
       PORT: "3000"
       HOSTNAME: "0.0.0.0"
     ports:
-      - "3000:3000"
+      - "3005:3000"
     volumes:
       - db_data:/app/data
       - media_data:/app/media
