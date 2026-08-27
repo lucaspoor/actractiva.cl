@@ -6,8 +6,8 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/80 backdrop-blur-md">
       <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-        <Link href="/" className="text-lg font-semibold tracking-tight">
-          Atractiva
+        <Link href="/" className="flex items-center">
+          <img src="/api/media/file/logo1.png" alt="Atractiva" className="h-8 w-auto" />
         </Link>
         <div className="flex items-center gap-6 text-sm">
           <Link href="/#coleccion" className="hidden hover:underline sm:inline">

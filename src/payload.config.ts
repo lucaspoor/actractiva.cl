@@ -30,6 +30,7 @@ export default buildConfig({
   collections: [Products, Orders, Media, Users],
   globals: [SizeCharts],
   db: sqliteAdapter({
+    push: true,
     client: {
       url: process.env.DATABASE_URI || 'file:./payload.db',
     },

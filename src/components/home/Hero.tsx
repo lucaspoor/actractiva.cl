@@ -9,8 +9,13 @@ export function Hero() {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-2xl"
+        className="flex flex-col items-center max-w-2xl"
       >
+        <img
+          src="/api/media/file/logo2.png"
+          alt="Atractiva"
+          className="mb-8 w-64 sm:w-96"
+        />
         <p className="mb-4 text-sm uppercase tracking-[0.3em] text-zinc-500">
           Colección esencial
         </p>
