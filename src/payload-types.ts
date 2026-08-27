@@ -234,6 +234,10 @@ export interface Order {
    * Código de estado devuelto por Flow (1-4).
    */
   flowStatus?: number | null;
+  /**
+   * Entorno donde se procesó el pago.
+   */
+  flowEnv?: ('sandbox' | 'production') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -399,6 +403,7 @@ export interface OrdersSelect<T extends boolean = true> {
   flowToken?: T;
   flowOrder?: T;
   flowStatus?: T;
+  flowEnv?: T;
   updatedAt?: T;
   createdAt?: T;
 }

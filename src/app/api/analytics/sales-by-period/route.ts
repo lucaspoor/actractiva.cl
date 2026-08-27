@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest) {
   try {
     const period = request.nextUrl.searchParams.get('period') ?? '30d'
+    const flowEnv = request.nextUrl.searchParams.get('flowEnv') ?? 'production'
     const days = period === '7d' ? 7 : period === '90d' ? 90 : 30
 
     const payload = await getPayload({ config })
@@ -20,6 +21,7 @@ export async function GET(request: NextRequest) {
         and: [
           { createdAt: { greater_than: since.toISOString() } },
           { status: { equals: 'paid' } },
+          { flowEnv: { equals: flowEnv } },
         ],
       },
       limit: 0,

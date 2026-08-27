@@ -21,7 +21,7 @@ export default buildConfig({
       forgot: '/forgot-password',
     },
     components: {
-      beforeDashboard: ['@/components/admin/DashboardAnalytics'],
+      afterDashboard: ['@/components/admin/DashboardLink'],
     },
     importMap: {
       baseDir: path.resolve(dirname),

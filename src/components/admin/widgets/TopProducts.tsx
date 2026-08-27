@@ -12,15 +12,15 @@ function formatCLP(value: number): string {
   return `$ ${value.toLocaleString('es-CL')}`
 }
 
-export function TopProducts() {
+export function TopProducts({ flowEnv }: { flowEnv: string }) {
   const [products, setProducts] = useState<TopProduct[]>([])
 
   useEffect(() => {
-    fetch('/api/analytics/top-products?limit=5')
+    fetch(`/api/analytics/top-products?limit=5&flowEnv=${flowEnv}`)
       .then((r) => r.json())
       .then((json) => setProducts(json.products ?? []))
       .catch(console.error)
-  }, [])
+  }, [flowEnv])
 
   if (products.length === 0) {
     return (

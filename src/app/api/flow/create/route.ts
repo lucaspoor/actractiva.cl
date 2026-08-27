@@ -100,6 +100,7 @@ export async function POST(request: NextRequest) {
           region: customer.region,
         },
         paymentProvider: 'flow',
+        flowEnv: process.env.FLOW_ENV === 'production' ? 'production' : 'sandbox',
       },
     })
 

@@ -7,12 +7,18 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest) {
   try {
     const limit = Number(request.nextUrl.searchParams.get('limit')) || 5
+    const flowEnv = request.nextUrl.searchParams.get('flowEnv') ?? 'production'
 
     const payload = await getPayload({ config })
 
     const { docs: paidOrders } = await payload.find({
       collection: 'orders',
-      where: { status: { equals: 'paid' } },
+      where: {
+        and: [
+          { status: { equals: 'paid' } },
+          { flowEnv: { equals: flowEnv } },
+        ],
+      },
       limit: 0,
       depth: 0,
       overrideAccess: true,

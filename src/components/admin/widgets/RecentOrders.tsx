@@ -6,6 +6,7 @@ type Order = {
   id: number
   orderNumber?: string | null
   status?: string | null
+  flowEnv?: string | null
   total?: number | null
   customer: { name: string; email: string }
   createdAt: string
@@ -38,15 +39,15 @@ function formatDate(iso: string): string {
   })
 }
 
-export function RecentOrders() {
+export function RecentOrders({ flowEnv }: { flowEnv: string }) {
   const [orders, setOrders] = useState<Order[]>([])
 
   useEffect(() => {
-    fetch('/api/analytics/recent-orders')
+    fetch(`/api/analytics/recent-orders?flowEnv=${flowEnv}`)
       .then((r) => r.json())
       .then((json) => setOrders(json.orders ?? []))
       .catch(console.error)
-  }, [])
+  }, [flowEnv])
 
   if (orders.length === 0) {
     return (
@@ -74,7 +75,14 @@ export function RecentOrders() {
           <tbody>
             {orders.map((order) => (
               <tr key={order.id} className="border-b border-zinc-50">
-                <td className="py-2 font-mono text-xs">{order.orderNumber ?? `#${order.id}`}</td>
+                <td className="py-2 font-mono text-xs">
+                  <span>{order.orderNumber ?? `#${order.id}`}</span>
+                  {order.flowEnv === 'sandbox' && (
+                    <span className="ml-1.5 inline-block rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
+                      TEST
+                    </span>
+                  )}
+                </td>
                 <td className="py-2">{order.customer.name}</td>
                 <td className="py-2 text-right">{formatCLP(order.total ?? 0)}</td>
                 <td className="py-2 text-center">

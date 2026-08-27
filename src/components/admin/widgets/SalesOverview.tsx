@@ -14,15 +14,15 @@ function formatCLP(value: number): string {
   return `$ ${value.toLocaleString('es-CL')}`
 }
 
-export function SalesOverview() {
+export function SalesOverview({ flowEnv }: { flowEnv: string }) {
   const [data, setData] = useState<SummaryData | null>(null)
 
   useEffect(() => {
-    fetch('/api/analytics/summary')
+    fetch(`/api/analytics/summary?flowEnv=${flowEnv}`)
       .then((r) => r.json())
       .then(setData)
       .catch(console.error)
-  }, [])
+  }, [flowEnv])
 
   if (!data) {
     return (

@@ -28,16 +28,16 @@ function formatDate(dateStr: string): string {
   return d.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })
 }
 
-export function SalesChart() {
+export function SalesChart({ flowEnv }: { flowEnv: string }) {
   const [period, setPeriod] = useState<Period>('30d')
   const [data, setData] = useState<SalesPoint[]>([])
 
   useEffect(() => {
-    fetch(`/api/analytics/sales-by-period?period=${period}`)
+    fetch(`/api/analytics/sales-by-period?period=${period}&flowEnv=${flowEnv}`)
       .then((r) => r.json())
       .then((json) => setData(json.data ?? []))
       .catch(console.error)
-  }, [period])
+  }, [period, flowEnv])
 
   return (
     <div className="rounded-lg border border-zinc-200 p-6">

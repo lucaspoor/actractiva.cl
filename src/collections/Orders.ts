@@ -115,5 +115,18 @@ export const Orders: CollectionConfig = {
         description: 'Código de estado devuelto por Flow (1-4).',
       },
     },
+    {
+      name: 'flowEnv',
+      type: 'select',
+      options: [
+        { label: 'Test', value: 'sandbox' },
+        { label: 'Producción', value: 'production' },
+      ],
+      defaultValue: 'sandbox',
+      admin: {
+        position: 'sidebar',
+        description: 'Entorno donde se procesó el pago.',
+      },
+    },
   ],
 }
