@@ -74,6 +74,7 @@ async function seed() {
 
   const products: {
     title: string
+    category: 'polera' | 'chaqueta' | 'pantalon'
     price: number
     sizes: ('XS' | 'S' | 'M' | 'L' | 'XL')[]
     stock: number
@@ -82,6 +83,7 @@ async function seed() {
   }[] = [
     {
       title: 'Chaqueta',
+      category: 'chaqueta',
       price: 69990,
       sizes: ['XS', 'S', 'M', 'L', 'XL'],
       stock: 30,
@@ -91,6 +93,7 @@ async function seed() {
     },
     {
       title: 'Pantalón',
+      category: 'pantalon',
       price: 49990,
       sizes: ['S', 'M', 'L', 'XL'],
       stock: 40,

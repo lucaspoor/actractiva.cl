@@ -91,8 +91,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'size-charts': SizeChart;
+  };
+  globalsSelect: {
+    'size-charts': SizeChartsSelect<false> | SizeChartsSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -137,6 +141,10 @@ export interface Product {
    * Precio en pesos chilenos (CLP).
    */
   price: number;
+  /**
+   * Categoría usada para la tabla de tallas.
+   */
+  category: 'polera' | 'chaqueta' | 'pantalon';
   sizes?: ('XS' | 'S' | 'M' | 'L' | 'XL')[] | null;
   stock?: number | null;
   featured?: boolean | null;
@@ -346,6 +354,7 @@ export interface ProductsSelect<T extends boolean = true> {
   slug?: T;
   description?: T;
   price?: T;
+  category?: T;
   sizes?: T;
   stock?: T;
   featured?: T;
@@ -497,6 +506,92 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "size-charts".
+ */
+export interface SizeChart {
+  id: number;
+  polera?: {
+    rows?:
+      | {
+          talla: string;
+          pecho: string;
+          largo: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  chaqueta?: {
+    rows?:
+      | {
+          talla: string;
+          pecho: string;
+          largo: string;
+          manga: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  pantalon?: {
+    rows?:
+      | {
+          talla: string;
+          cintura: string;
+          largo: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "size-charts_select".
+ */
+export interface SizeChartsSelect<T extends boolean = true> {
+  polera?:
+    | T
+    | {
+        rows?:
+          | T
+          | {
+              talla?: T;
+              pecho?: T;
+              largo?: T;
+              id?: T;
+            };
+      };
+  chaqueta?:
+    | T
+    | {
+        rows?:
+          | T
+          | {
+              talla?: T;
+              pecho?: T;
+              largo?: T;
+              manga?: T;
+              id?: T;
+            };
+      };
+  pantalon?:
+    | T
+    | {
+        rows?:
+          | T
+          | {
+              talla?: T;
+              cintura?: T;
+              largo?: T;
+              id?: T;
+            };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

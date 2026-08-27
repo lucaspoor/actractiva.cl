@@ -51,3 +51,39 @@ export async function sendOrderConfirmation(to: string, order: OrderEmailData) {
     `,
   })
 }
+
+export async function sendPasswordResetEmail(to: string, resetToken: string) {
+  const apiKey = process.env.RESEND_API_KEY
+  const from = process.env.RESEND_FROM_EMAIL
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://atractivacl.cl'
+
+  if (!apiKey || !from) {
+    console.warn('[resend] Variables RESEND_API_KEY / RESEND_FROM_EMAIL no configuradas. Correo omitido.')
+    return null
+  }
+
+  const resend = new Resend(apiKey)
+  const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`
+
+  return resend.emails.send({
+    from,
+    to,
+    subject: 'Restablece tu contraseña — Atractiva',
+    html: `
+      <div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px 0">
+        <h2 style="margin-bottom:16px">Restablece tu contraseña</h2>
+        <p style="margin-bottom:24px;color:#52525b">
+          Recibimos una solicitud para restablecer la contraseña de tu cuenta.
+          Haz clic en el botón de abajo para crear una nueva contraseña.
+        </p>
+        <a href="${resetUrl}"
+           style="display:inline-block;background:#18181b;color:#fff;padding:12px 24px;border-radius:9999px;text-decoration:none;font-weight:500">
+          Restablecer contraseña
+        </a>
+        <p style="margin-top:32px;color:#a1a1aa;font-size:14px">
+          Este enlace expira en 1 hora. Si no solicitaste este cambio, puedes ignorar este mensaje.
+        </p>
+      </div>
+    `,
+  })
+}

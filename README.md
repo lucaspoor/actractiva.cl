@@ -1,5 +1,11 @@
 # Atractiva CL — Tienda
 
+usuarios base de datos:
+admin@atractivacl.cl
+1234
+
+
+
 E-commerce minimalista (Chaqueta y Pantalón) construido con Next.js + Payload CMS + SQLite + Flow (pagos) + Resend (email).
 
 ## Desarrollo local

@@ -4,6 +4,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 
 import { AddToCartButton } from '@/components/cart/AddToCartButton'
+import { SizeChart } from '@/components/product/SizeChart'
 import { formatPrice, getMediaUrl } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
@@ -43,6 +44,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const imageUrl = getMediaUrl(typeof media === 'object' ? media : null, 'card')
   const alt = media && typeof media === 'object' ? (media.alt ?? product.title) : product.title
 
+  const payload = await getPayload({ config })
+  const sizeCharts = await payload.findGlobal({ slug: 'size-charts' })
+  const categoryRows =
+    product.category === 'polera'
+      ? sizeCharts.polera?.rows
+      : product.category === 'chaqueta'
+        ? sizeCharts.chaqueta?.rows
+        : sizeCharts.pantalon?.rows
+
   return (
     <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-2">
       <div className="aspect-[4/5] overflow-hidden rounded-lg bg-zinc-100">
@@ -74,6 +84,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
             sizes={product.sizes ?? []}
           />
         </div>
+
+        {product.category && categoryRows && categoryRows.length > 0 && (
+          <SizeChart category={product.category} rows={categoryRows} />
+        )}
       </div>
     </div>
   )

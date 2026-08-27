@@ -9,6 +9,7 @@ import { Media } from './collections/Media'
 import { Orders } from './collections/Orders'
 import { Products } from './collections/Products'
 import { Users } from './collections/Users'
+import { SizeCharts } from './globals/SizeCharts'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -16,11 +17,18 @@ const dirname = path.dirname(filename)
 export default buildConfig({
   admin: {
     user: Users.slug,
+    routes: {
+      forgot: '/forgot-password',
+    },
+    components: {
+      beforeDashboard: ['@/components/admin/DashboardAnalytics'],
+    },
     importMap: {
       baseDir: path.resolve(dirname),
     },
   },
   collections: [Products, Orders, Media, Users],
+  globals: [SizeCharts],
   db: sqliteAdapter({
     client: {
       url: process.env.DATABASE_URI || 'file:./payload.db',

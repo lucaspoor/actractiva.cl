@@ -1,4 +1,4 @@
-import type { CollectionConfig } from 'payload'
+  import type { CollectionConfig } from 'payload'
 
 const slugify = (value: string): string =>
   value
@@ -45,6 +45,21 @@ export const Products: CollectionConfig = {
       min: 0,
       admin: {
         description: 'Precio en pesos chilenos (CLP).',
+      },
+    },
+    {
+      name: 'category',
+      type: 'select',
+      options: [
+        { label: 'Polera', value: 'polera' },
+        { label: 'Chaqueta', value: 'chaqueta' },
+        { label: 'Pantalón', value: 'pantalon' },
+      ],
+      defaultValue: 'polera',
+      required: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Categoría usada para la tabla de tallas.',
       },
     },
     {
