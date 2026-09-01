@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  DEPLOY_DIR: /opt/atractivacl.cl
+  DEPLOY_DIR: atractivacl.cl
 
 jobs:
   ci:
