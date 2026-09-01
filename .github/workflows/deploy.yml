@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  DEPLOY_DIR: actractivacl.cl
+  DEPLOY_DIR: actractiva.cl
 
 jobs:
   ci:
