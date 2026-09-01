@@ -37,7 +37,7 @@ jobs:
   deploy:
     needs: ci
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 40
 
     steps:
       - name: Deploy via SSH
@@ -47,6 +47,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           timeout: 600s
+          command_timeout: 30m
           script: |
             set -e
             cd "${{ env.DEPLOY_DIR }}"
