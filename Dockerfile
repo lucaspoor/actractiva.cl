@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ============ Etapa 1: dependencias ============
-FROM node:20-slim AS deps
+FROM node:22-slim AS deps
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
@@ -11,7 +11,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 # ============ Etapa 2: build + seed ============
-FROM node:20-slim AS builder
+FROM node:22-slim AS builder
 WORKDIR /app
 
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -44,7 +44,7 @@ RUN npm run build
 RUN SEED_MEDIA_DIR=/seed-media npm run seed
 
 # ============ Etapa 3: runtime (standalone) ============
-FROM node:20-slim AS runner
+FROM node:22-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production \
