@@ -1,4 +1,4 @@
-import { sqliteAdapter } from '@payloadcms/db-sqlite'
+import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
@@ -29,11 +29,11 @@ export default buildConfig({
   },
   collections: [Products, Orders, Media, Users],
   globals: [SizeCharts],
-  db: sqliteAdapter({
-    push: true,
-    client: {
-      url: process.env.DATABASE_URI || 'file:./payload.db',
+  db: postgresAdapter({
+    pool: {
+      connectionString: process.env.DATABASE_URI || 'postgres://atractiva:atractiva-pg@127.0.0.1:5432/atractiva',
     },
+    push: process.env.NODE_ENV !== 'production',
   }),
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'dev-secret-atractiva-change-me',

@@ -1,29 +1,65 @@
 version: "3.8"
 
 services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-atractiva}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-atractiva-pg}
+      POSTGRES_DB: ${POSTGRES_DB:-atractiva}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-atractiva} -d ${POSTGRES_DB:-atractiva}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  migrate:
+    image: atractiva-migrate
+    build:
+      context: .
+      target: source
+    restart: "no"
+    env_file: [.env]
+    environment:
+      NODE_ENV: production
+      DATABASE_URI: postgres://${POSTGRES_USER:-atractiva}:${POSTGRES_PASSWORD:-atractiva-pg}@db:5432/${POSTGRES_DB:-atractiva}
+      PAYLOAD_CONFIG_PATH: src/payload.config.ts
+    volumes:
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["npx", "payload", "migrate"]
+
   web:
     build:
       context: .
+      target: runner
+      network: host
       args:
+        DATABASE_URI: postgres://${POSTGRES_USER:-atractiva}:${POSTGRES_PASSWORD:-atractiva-pg}@127.0.0.1:${POSTGRES_PORT:-5433}/${POSTGRES_DB:-atractiva}
         NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-http://localhost:3000}
         PAYLOAD_SECRET: ${PAYLOAD_SECRET:-dev-secret-atractiva-change-me}
-        SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@atractivacl.cl}
-        SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-atractiva-admin}
-        DATABASE_URI: file:/app/payload.db
-    env_file:
-      - .env
+    env_file: [.env]
     environment:
       NODE_ENV: production
-      DATABASE_URI: file:/app/data/payload.db
+      DATABASE_URI: postgres://${POSTGRES_USER:-atractiva}:${POSTGRES_PASSWORD:-atractiva-pg}@db:5432/${POSTGRES_DB:-atractiva}
       NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-http://localhost:3000}
       PORT: "3000"
       HOSTNAME: "0.0.0.0"
     ports:
       - "3005:3000"
     volumes:
-      - db_data:/app/data
       - media_data:/app/media
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
     healthcheck:
       test:
         - CMD
@@ -36,5 +72,5 @@ services:
       start_period: 20s
 
 volumes:
-  db_data:
+  pg_data:
   media_data:

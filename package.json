@@ -10,11 +10,12 @@
     "lint": "eslint",
     "typegen": "payload generate:types",
     "migrate": "payload migrate",
+    "migrate:create": "payload migrate:create",
+    "migrate:status": "payload migrate:status",
     "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
-    "@payloadcms/db-sqlite": "^3.87.1",
-    "@payloadcms/next": "^3.87.1",
+    "@payloadcms/db-postgres": "3.87.1",
     "@payloadcms/richtext-lexical": "^3.87.1",
     "dotenv": "^17.4.2",
     "framer-motion": "^13.0.0",
