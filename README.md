@@ -34,83 +34,83 @@ productos por `title`, media por `filename`). Escribe las imágenes en `media/`.
 
 ## Despliegue en servidor con Docker
 
-PostgreSQL corre self-hosted como servicio `db` de docker-compose en el mismo
-servidor. El esquema lo gestionan las **migraciones de Payload commiteadas en
-`src/migrations`**; el deploy manual las aplica **antes** del build. No hay
-CI/CD: cada release se despliega por SSH.
+Docker Compose orquesta **todo el stack** (PostgreSQL + migraciones + app) con
+un solo comando. No requiere Postgres externo: el servicio `db` lo levanta.
 
 ### Requisitos en el servidor
 
 - Docker + Docker Compose v2 (`docker compose`)
 - git (deploy manual por SSH)
-- Puerto `5433` libre en el host (publicación loopback de Postgres)
+- Puerto `5433` libre en el host (publicación loopback de Postgres, solo para
+  `psql`/desarrollo local; la app interna usa `db:5432`)
 
-### Pasos
+### Un solo comando
 
-1. Copia el proyecto al servidor (git clone o rsync).
+```bash
+docker compose up -d --build
+```
 
-2. Crea el archivo de entorno a partir del ejemplo y edita los valores reales:
+Esto hace, en orden automático:
 
-   ```bash
-   cp .env.production .env
-   nano .env
-   ```
+1. **Build de las imágenes** (`migrate` y `web`) — **sin** necesidad de que
+   Postgres esté arriba: `next build` no consulta la DB (todas las páginas son
+   `force-dynamic`).
+2. **`db`** arranca (Postgres 16) y se espera a que quede **healthy**.
+3. **`migrate`** corre `npx payload migrate` (aplica las migraciones de
+   `src/migrations`, es idempotente) y termina con éxito.
+4. **`web`** arranca recién cuando `db` está healthy **y** `migrate` terminó.
 
-   Al menos revisa: `NEXT_PUBLIC_BASE_URL`, `PAYLOAD_SECRET`, `FLOW_*`,
-   `RESEND_*`. Agrega/ajusta las variables de Postgres: `POSTGRES_USER`,
-   `POSTGRES_PASSWORD` (**alfanumérica**: se interpola en URLs de conexión),
-   `POSTGRES_DB`, `POSTGRES_PORT=5433`.
+El nombre de proyecto está fijado en `name: atractivacl` al tope del compose:
+no depende de cómo se llame la carpeta, así que `docker compose ps` y el resto
+de comandos siempre apuntan a la misma stack.
 
-   > `FLOW_ENV` puede ser `sandbox` (pruebas) o `production`. Si quieres probar
-   > pagos reales, usa `FLOW_ENV=production` con las claves de producción en
-   > la consola de Flow.
+### Qué levanta
 
-3. Deploy manual — cada release (las migraciones SIEMPRE antes del build: el
-   init de Payload conecta a la DB durante `next build`, por eso `db` debe
-   estar healthy y el build usa la URL host):
+| Servicio | Imagen             | Puerto host        | Persistencia                    |
+|----------|--------------------|--------------------|---------------------------------|
+| `db`     | `postgres:16-alpine` | `127.0.0.1:5433`  | volumen `atractivacl_pg_data`   |
+| `migrate`| one-shot           | —                  | (no persiste, media en `media_data`) |
+| `web`    | construida del Dockerfile (`target: runner`) | `0.0.0.0:3005` | volumen `atractivacl_media_data` |
 
-   ```bash
-   set -e
-   cd ~/actractiva.cl
-   git pull --ff-only
-   docker compose up -d db
-   for i in $(seq 1 30); do
-     status=$(docker inspect -f '{{.State.Health.Status}}' "$(docker compose ps -q db)" 2>/dev/null || echo starting)
-     [ "$status" = "healthy" ] && break
-     [ "$i" = "30" ] && echo "postgres no quedó healthy" && exit 1
-     sleep 5
-   done
-   docker compose build migrate
-   docker compose run --rm migrate        # aplica migraciones pendientes; exit≠0 aborta
-   docker compose up -d --build web
-   for i in $(seq 1 30); do
-     status=$(docker inspect -f '{{.State.Health.Status}}' "$(docker compose ps -q web)" 2>/dev/null || echo starting)
-     [ "$status" = "healthy" ] && break
-     [ "$i" = "30" ] && echo "web no quedó healthy tras 150s" && exit 1
-     sleep 5
-   done
-   docker image prune -f
-   ```
+- Sitio: `http://TUSERVER:3005` · Admin: `/admin` · Cambia el puerto con
+  `WEB_PORT=xxxx` en `.env`.
+- La app y las migraciones hablan con Postgres por la **red interna de compose**
+  (`db:5432`). El `5433` del host es solo para que tú puedas hacer `psql` o
+  correr `npm run dev` local contra el mismo Postgres.
 
-   El sitio queda en `http://TUSERVER:3000` y el admin en `/admin`.
+### Configuración (`.env`)
 
-4. Seed — solo en el cutover inicial o si la DB está vacía:
+```bash
+cp .env.production .env
+nano .env
+```
 
-   ```bash
-   docker compose run --rm migrate npm run seed
-   ```
+Revisa al menos: `NEXT_PUBLIC_BASE_URL`, `PAYLOAD_SECRET`, `FLOW_*`,
+`RESEND_*`. Y las variables de Postgres, que el compose interpola en las URLs
+de conexión: `POSTGRES_USER`, `POSTGRES_PASSWORD` (**alfanumérica**),
+`POSTGRES_DB`, `POSTGRES_PORT=5433`.
 
-   No va en la secuencia de deploy: evita recrear productos si el admin los
-   renombró/borró en producción.
+> `FLOW_ENV` puede ser `sandbox` (pruebas) o `production`.
 
-### Primer arranque (cutover desde SQLite)
+### Primer arranque
 
-La DB de producción arranca limpia (no se migran datos sqlite). Antes de
-desplegar por primera vez con Postgres: respalda el volumen sqlite, ajusta
-`.env` (`DATABASE_URI` apuntando a `db`, agrega `POSTGRES_*`), despliega y
-corre el seed una sola vez. El volumen sqlite (`db_data`) puede borrarse tras
-confirmar que todo funciona. Ver el procedimiento exacto en el historial de
-release (Paso 11 del plan de migración).
+La DB arranca limpia y las migraciones crean el esquema automáticamente. Para
+tener productos y admin (solo la primera vez):
+
+```bash
+docker compose run --rm migrate npm run seed
+```
+
+### Operación diaria
+
+```bash
+docker compose ps                 # estado de la stack
+docker compose logs -f web        # logs de la app
+docker compose logs -f db         # logs de Postgres
+docker compose up -d --build      # aplicar nuevo código (rebuild + migra + up)
+docker compose down               # detener sin borrar datos
+docker compose down -v            # detener Y borrar volúmenes (reset total)
+```
 
 ### Cambios de esquema (flujo dev/prod)
 
@@ -124,23 +124,23 @@ release (Paso 11 del plan de migración).
    git add src/migrations && git commit
    ```
 
-3. El siguiente deploy (paso 3) aplica la migración pendiente con el job
-   `migrate`. Nunca corras migraciones contra la DB de dev: su esquema ya está
-   pusheado y la baseline fallaría por tablas existentes.
+3. El siguiente `docker compose up -d --build` aplica la migración pendiente
+   con el job `migrate`. Nunca corras migraciones contra la DB de dev: su
+   esquema ya está pusheado y la baseline fallaría por tablas existentes.
 
 ### Backup / restore
 
 ```bash
 # Backup (dentro del contenedor db)
-docker compose exec db pg_dump -U atractiva atractiva > backup.sql
+docker compose exec db pg_dump -U atractiva atractiva_dev > backup.sql
 
 # Restore
-docker compose exec -T db psql -U atractiva atractiva < backup.sql
+docker compose exec -T db psql -U atractiva atractiva_dev < backup.sql
 ```
 
 ### Nginx / HTTPS (opcional pero recomendado)
 
-El contenedor publica el puerto 3000. Un ejemplo de proxy inverso:
+El contenedor publica el puerto 3005. Un ejemplo de proxy inverso:
 
 ```nginx
 server {
@@ -148,7 +148,7 @@ server {
     server_name atractivacl.cl www.atractivacl.cl;
 
     location / {
-        proxy_pass http://127.0.0.1:3000;
+        proxy_pass http://127.0.0.1:3005;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -164,11 +164,13 @@ Luego agrega HTTPS con certbot. Recuerda que el webhook de Flow
 
 ### Notas
 
-- `FLOW_ENV` puede ser `sandbox` (pruebas) o `production`.
+- El `build` de la imagen `web` **no necesita** la DB: se compiló y verificó sin
+  Postgres arriba. El job `migrate` (one-shot) es quien prepara el esquema antes
+  de que `web` arranque.
+- Los datos persisten en los volúmenes nombrados `atractivacl_pg_data`
+  (Postgres) y `atractivacl_media_data` (imágenes). El media viaja desde el
+  build (`COPY media ./media`) y luego el volumen lo sobreescribe en runtime.
+- El job `migrate` necesita `scripts/` en la imagen para poder correr el seed
+  (el Dockerfile lo copia en la etapa `deps`).
 - Si cambias el secreto de Payload después de crear datos, las sesiones se
   invalidan; cámbialo antes del primer arranque.
-- El usuario `db` (Postgres) se publica solo en `127.0.0.1:5433` del host; la
-  red interna de compose (`web`/`migrate`) lo alcanza como `db:5432`.
-- Los datos persisten en los volúmenes nombrados `_pg_data` (Postgres) y
-  `_media_data` (imágenes). El media ya presente en `_media_data` (era SQLite)
-  no se borra: quedan archivos huérfanos inocuos.

@@ -13,6 +13,7 @@ RUN npm ci
 COPY media ./media
 COPY public ./public
 COPY src ./src
+COPY scripts ./scripts
 COPY tsconfig.json ./
 COPY next.config.ts ./
 

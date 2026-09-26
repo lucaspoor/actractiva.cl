@@ -1,4 +1,4 @@
-version: "3.8"
+name: atractivacl
 
 services:
   db:
@@ -13,13 +13,13 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-atractiva} -d ${POSTGRES_DB:-atractiva}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-atractiva} -d ${POSTGRES_DB:-atractiva} && psql -U ${POSTGRES_USER:-atractiva} -d ${POSTGRES_DB:-atractiva} -c 'SELECT 1' >/dev/null"]
       interval: 5s
       timeout: 5s
       retries: 12
+      start_period: 10s
 
   migrate:
-    image: atractiva-migrate
     build:
       context: .
       target: source
@@ -40,9 +40,8 @@ services:
     build:
       context: .
       target: runner
-      network: host
       args:
-        DATABASE_URI: postgres://${POSTGRES_USER:-atractiva}:${POSTGRES_PASSWORD:-atractiva-pg}@127.0.0.1:${POSTGRES_PORT:-5433}/${POSTGRES_DB:-atractiva}
+        DATABASE_URI: postgres://${POSTGRES_USER:-atractiva}:${POSTGRES_PASSWORD:-atractiva-pg}@db:5432/${POSTGRES_DB:-atractiva}
         NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-http://localhost:3000}
         PAYLOAD_SECRET: ${PAYLOAD_SECRET:-dev-secret-atractiva-change-me}
     env_file: [.env]
@@ -53,13 +52,15 @@ services:
       PORT: "3000"
       HOSTNAME: "0.0.0.0"
     ports:
-      - "3005:3000"
+      - "${WEB_PORT:-3005}:3000"
     volumes:
       - media_data:/app/media
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test:
         - CMD
