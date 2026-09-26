@@ -2,7 +2,7 @@
 
 usuarios base de datos:
 admin@atractivacl.cl
-1234
+atractiva-admin
 
 
 
