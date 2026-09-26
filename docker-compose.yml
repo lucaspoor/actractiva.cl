@@ -34,7 +34,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: ["npx", "payload", "migrate"]
+    command: ["sh", "-c", "yes | npx payload migrate"]
 
   web:
     build:

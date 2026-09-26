@@ -172,5 +172,12 @@ Luego agrega HTTPS con certbot. Recuerda que el webhook de Flow
   build (`COPY media ./media`) y luego el volumen lo sobreescribe en runtime.
 - El job `migrate` necesita `scripts/` en la imagen para poder correr el seed
   (el Dockerfile lo copia en la etapa `deps`).
+- El Dockerfile copia `postcss.config.mjs`: sin él, `next build` no ejecuta el
+  plugin `@tailwindcss/postcss` y el storefront sale sin estilos.
+- El job `migrate` corre con `yes |` (no interactivo): si corriste `npm run dev`
+  contra la misma DB (compartida en `127.0.0.1:5433`), Payload deja una marca
+  `dev` (`batch = -1`) en `payload_migrations` que hace que `payload migrate`
+  pregunte en consola; el `yes |` la acepta automáticamente y nunca se cuelga en
+  el deploy. Es inofensiva: con las migraciones ya aplicadas, solo se filtra.
 - Si cambias el secreto de Payload después de crear datos, las sesiones se
   invalidan; cámbialo antes del primer arranque.

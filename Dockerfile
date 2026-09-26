@@ -16,6 +16,7 @@ COPY src ./src
 COPY scripts ./scripts
 COPY tsconfig.json ./
 COPY next.config.ts ./
+COPY postcss.config.mjs ./
 
 # ============ Etapa 2: fuente (CLIs: payload migrate / seed) ============
 # Sin build ni seed: solo código + node_modules para ejecutar el CLI de Payload
