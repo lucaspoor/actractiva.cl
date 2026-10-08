@@ -30,7 +30,7 @@ services:
       DATABASE_URI: postgres://${POSTGRES_USER:-atractiva}:${POSTGRES_PASSWORD:-atractiva-pg}@db:5432/${POSTGRES_DB:-atractiva}
       PAYLOAD_CONFIG_PATH: src/payload.config.ts
     volumes:
-      - media_data:/app/media
+      - ./media:/app/media
     depends_on:
       db:
         condition: service_healthy
@@ -54,7 +54,7 @@ services:
     ports:
       - "${WEB_PORT:-3005}:3000"
     volumes:
-      - media_data:/app/media
+      - ./media:/app/media
     restart: unless-stopped
     depends_on:
       db:
@@ -74,4 +74,3 @@ services:
 
 volumes:
   pg_data:
-  media_data:

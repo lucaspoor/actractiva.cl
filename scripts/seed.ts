@@ -24,10 +24,11 @@ const PRODUCT_IMAGES: Record<string, string> = {
 
 async function ensureMedia(payload: ReturnType<typeof getPayload> extends Promise<infer T> ? T : never, filePath: string) {
   const filename = path.basename(filePath)
+  const alt = path.parse(filename).name
 
   const { docs: existing } = await payload.find({
     collection: 'media',
-    where: { filename: { equals: filename } },
+    where: { alt: { equals: alt } },
     limit: 1,
     overrideAccess: true,
   })
